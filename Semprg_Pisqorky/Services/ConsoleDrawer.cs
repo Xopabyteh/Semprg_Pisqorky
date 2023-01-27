@@ -18,7 +18,7 @@ public class ConsoleDrawer : Drawer
     public override void PushHeader()
     {
         Console.SetCursorPosition(0, 0);
-        Console.WriteLine(BatchNumber);
+        Console.WriteLine($"Turn: {BatchNumber}");
     }
 
     public override void PushDrawRequest(DrawData drawRequest)

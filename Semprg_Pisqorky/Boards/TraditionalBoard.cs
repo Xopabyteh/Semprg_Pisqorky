@@ -2,7 +2,7 @@
 
 namespace Semprg_Pisqorky.Boards;
 
-internal class TraditionalBoard : Board
+public class TraditionalBoard : Board
 {
     public sealed override IDictionary<Int2D, Tile> TileSet { get; set; }
     

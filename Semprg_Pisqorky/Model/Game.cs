@@ -13,27 +13,35 @@ public partial class Game
     private readonly Board board;
 
     /// <summary>
-    /// Players in random order
+    /// Players established at the start of the game, list doesn't change
     /// </summary>
-    private readonly IReadOnlyList<Player> players;
+    private readonly IReadOnlyList<Player> participants;
+
+    /// <summary>
+    /// Players that are active. This list might change due to disqualification
+    /// </summary>
+    private List<Player> activePlayers;
 
     public Game(Drawer drawer, Board board, IReadOnlyList<Player> players)
     {
         this.drawer = drawer;
         this.board = board;
 
-        this.players = PlayersInRandomOrder(players);
+        this.participants = PlayersInRandomOrder(players);
+        activePlayers = new List<Player>(participants);
     }
 
-    private IReadOnlyList<Player> PlayersInRandomOrder(IReadOnlyList<Player> players)
+    private IReadOnlyList<Player> PlayersInRandomOrder(IReadOnlyList<Player> playersToShuffle)
     {
         var random = new Random();
-        return players.OrderBy(x => random.Next()).ToList();
+        return playersToShuffle.OrderBy(x => random.Next()).ToList();
     }
 
-    private Player Winner;
+    private Player? winner;
 
-    public void SimulateGame()
+    /// <summary></summary>
+    /// <returns>The winner of the simulation. Can return <b>null</b>, if all players are disqualified</returns>
+    public Player? SimulateGame()
     {
         //Before loop
         drawer.ShiftBatchNumber();
@@ -48,7 +56,7 @@ public partial class Game
         
         //Game ended
         drawer.PopAll();
-        Console.ReadLine();
+        return winner;
     }
     /// <summary>
     /// </summary>
@@ -57,27 +65,49 @@ public partial class Game
     {
         drawer.PushHeader();
 
-        foreach (var player in players)
+        var playersToDisqualify = new List<Player>(activePlayers.Count);
+        foreach (var player in activePlayers)
         {
-            var gameView = new GameView(board);
+            var gameView = new GameView(board, activePlayers);
 
             var playerMove = player.PlayerStrategy.GetPlayerMove(gameView);
             var isMoveLegal = PlayPlayerMove(player, playerMove);
-            //Todo: work with move legality
-
+            
             board.Draw(drawer);
+
+            //Disqualify for making an illegal move:
+            if (!isMoveLegal)
+            {
+                playersToDisqualify.Add(player);
+                continue;
+            }
+
             if (CheckForWin())
             {
+                winner = player;
                 drawer.PushWinMessage($"Winning move: {playerMove.Position} by {player.Nickname}");
                 return false;
             }
 
         }
 
+        foreach (var player in playersToDisqualify)
+        {
+            activePlayers.Remove(player);
+        }
+
+        if (activePlayers.Count < 2)
+        {
+            winner = activePlayers.FirstOrDefault();
+            return false;
+        }
+
         return true;
     }
 
-    /// <summary></summary>
+    /// <summary>
+    /// Attempts to perform the move retrieved from the player. If the player decides to use a tile position that has no tile to it yet, it will create a new <b>TraditionalTile</b>
+    /// </summary>
     /// <returns><b>True</b> - move was successful <b>False</b> - move was illegal </returns>
     private bool PlayPlayerMove(Player player, PlayerMove playerMove)
     {
@@ -86,7 +116,10 @@ public partial class Game
         {
             //Tile exists
 
-            return false;
+            //Player tried to replace an occupied tile
+            if(tile is TraditionalTile)
+                return false;
+
         }
 
         //Tile doesn't yet exist

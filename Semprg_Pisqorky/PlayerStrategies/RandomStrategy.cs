@@ -21,7 +21,11 @@ public class RandomStrategy : IPlayerStrategy
             lowestY = tilePositions.Min(p => p.Y);
         }
 
-        var move = Int2D.RandomOnRectangle(new Int2D(lowestX-1, lowestY-1), new Int2D(highestX+1, highestY+1));
+        var move = Int2D.RandomOnRectangle(new Int2D(lowestX - 1, lowestY - 1), new Int2D(highestX + 1, highestY + 1));
+        while (gameView.Board.TileSet.ContainsKey(move))
+        {
+            move = Int2D.RandomOnRectangle(new Int2D(lowestX - 1, lowestY - 1), new Int2D(highestX + 1, highestY + 1));
+        }
         return new PlayerMove(move);
     }
 }

@@ -2,7 +2,6 @@
 
 public class Player
 {
-
     public string Nickname { get; init; }
     public char Shape { get; init; }
     public IPlayerStrategy PlayerStrategy { get; init; }

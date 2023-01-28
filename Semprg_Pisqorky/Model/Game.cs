@@ -49,6 +49,7 @@ public partial class Game
         while (Loop())
         {
             //After loop
+
             drawer.PopAll();
 
             drawer.ShiftBatchNumber();

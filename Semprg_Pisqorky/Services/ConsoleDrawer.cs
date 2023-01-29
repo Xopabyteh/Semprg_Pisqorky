@@ -14,6 +14,7 @@ public class ConsoleDrawer : Drawer
 
     private readonly IDictionary<DrawDataType, List<DrawData>> drawRequests;
     private Int2D bodyOffset;
+    private Int2D previousBodyOffset;
     
     private int previousWindowWidth;
     private int previousWindowHeight;
@@ -52,13 +53,15 @@ public class ConsoleDrawer : Drawer
 
     public override void PopAll()
     {
-        if (drawRequests.Count == 0)
+        if (drawRequests.Values.Aggregate(0, (sum, cur) => sum + cur.Count) == 0)
             return;
 
+        PushHeader($"Game: {GameNumber} Batch: {BatchNumber}");
+
         //Clear headers
-        foreach (var headerDrawData in drawRequests[DrawDataType.Header])
+        foreach (var drawRequest in drawRequests[DrawDataType.Header])
         {
-            Console.SetCursorPosition(headerDrawData.Position.X, headerDrawData.Position.Y);
+            Console.SetCursorPosition(drawRequest.Position.X, drawRequest.Position.Y);
             Console.WriteLine(new string(' ', previousWindowWidth));
         }
 
@@ -79,8 +82,16 @@ public class ConsoleDrawer : Drawer
             offset.Y = -smallestY;
         }
 
-        if (!offset.Equals(previousOffset) || (previousWindowWidth != Console.WindowWidth || previousWindowHeight != Console.WindowHeight))
+        if ((!offset.Equals(previousOffset) || !previousBodyOffset.Equals(bodyOffset)) || (previousWindowWidth != Console.WindowWidth || previousWindowHeight != Console.WindowHeight))
         {
+            //Clear body
+            foreach (var drawRequest in drawRequests[DrawDataType.Body])
+            {
+                var drawPos = drawRequest.Position + offset + bodyOffset;
+                Console.SetCursorPosition(drawPos.X, drawPos.Y);
+                Console.WriteLine(new string(' ', previousWindowWidth));
+            }
+
             previousWindowWidth = Console.WindowWidth;
             previousWindowHeight = Console.WindowHeight;
         }
@@ -100,6 +111,7 @@ public class ConsoleDrawer : Drawer
         }
 
         previousOffset = offset;
+        previousBodyOffset = bodyOffset;
         bodyOffset = Int2D.Zero;
 
         //Clear all draw requests
@@ -109,8 +121,6 @@ public class ConsoleDrawer : Drawer
         }
 
         ShiftBatchNumber();
-        PushHeader($"Game: {GameNumber} Batch: {BatchNumber}");
-
 
         Console.ReadLine();
     }

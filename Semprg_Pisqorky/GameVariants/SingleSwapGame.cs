@@ -24,7 +24,6 @@ public class SingleSwapGame : TraditionalGame
         for (int i = 0; i < 3; i++)
         {
             drawer.PushHeader($"{swapper.Nickname} placed swap piece #{i}");
-            
             var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(GameView);
             //0: swapper
             //1: other (Place the other players piece)

@@ -7,18 +7,27 @@ public class ConsoleDrawer : Drawer
 {
     private readonly List<DrawData> drawRequests;
     private Int2D bodyOffset;
+    
+    private int previousWindowWidth;
+    private int previousWindowHeight;
+
+    private string lastHeaderMsg = string.Empty;
 
     public ConsoleDrawer()
     {
         drawRequests = new List<DrawData>();
         //Make room for header
         bodyOffset = new Int2D(0, 1);
+        previousWindowWidth = Console.WindowWidth;
+        previousWindowHeight = Console.WindowHeight;
     }
 
-    public override void PushHeader()
+    public override void PushHeader(string msg)
     {
+        lastHeaderMsg = msg;
         Console.SetCursorPosition(0, 0);
-        Console.WriteLine($"Turn: {BatchNumber}");
+        var headerText = $"G{GameNumber} B{BatchNumber} {msg}";
+        Console.Write($"{headerText}{new string(' ',Console.WindowWidth - headerText.Length)}");
     }
 
     public override void PushDrawRequest(DrawData drawRequest)
@@ -26,15 +35,6 @@ public class ConsoleDrawer : Drawer
         drawRequests.Add(drawRequest);
     }
 
-    public override void PushWinMessage(string msg)
-    {
-        //Make room for win message
-        bodyOffset += new Int2D(0, 1);
-        Console.Clear(); 
-        PushHeader();
-        Console.SetCursorPosition(0, 1);
-        Console.WriteLine(msg);
-    }
 
     private Int2D previousOffset;
 
@@ -60,19 +60,31 @@ public class ConsoleDrawer : Drawer
             offset.Y = -smallestY;
         }
 
-        if (!offset.Equals(previousOffset))
+        
+        if (!offset.Equals(previousOffset) || (previousWindowWidth != Console.WindowWidth || previousWindowHeight != Console.WindowHeight))
         {
             Console.Clear();
+            PushHeader(lastHeaderMsg);
+            previousWindowWidth = Console.WindowWidth;
+            previousWindowHeight = Console.WindowHeight;
         }
 
         foreach (var drawRequest in drawRequests)
         {
             var drawPos = drawRequest.Position + offset + bodyOffset;
-            Console.SetCursorPosition(drawPos.X, drawPos.Y);
+            Console.SetCursorPosition(drawPos.X*2, drawPos.Y);
             Console.Write(drawRequest.Msg);
         }
 
         previousOffset = offset;
         drawRequests.Clear();
+        ShiftBatchNumber();
+
+        Console.ReadLine();
+    }
+
+    protected override void IndicateNewGame()
+    {
+        Console.Clear();
     }
 }

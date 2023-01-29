@@ -1,16 +1,16 @@
-﻿using System.Diagnostics;
+﻿using Semprg_Pisqorky.Model;
 using Semprg_Pisqorky.Tiles;
 
-namespace Semprg_Pisqorky.Model;
+namespace Semprg_Pisqorky.GameVariants;
 
-public partial class Game
+public class TraditionalGame
 {
     /// <summary>
     /// How many tiles must be in a line for it to be considered a win
     /// </summary>
     private const uint WINNING_LINE = 5;
-    private readonly Drawer drawer;
-    private readonly Board board;
+    protected readonly Drawer drawer;
+    protected readonly Board board;
 
     /// <summary>
     /// Players established at the start of the game, list doesn't change
@@ -20,15 +20,18 @@ public partial class Game
     /// <summary>
     /// Players that are active. This list might change due to disqualification
     /// </summary>
-    private List<Player> activePlayers;
+    protected List<Player> activePlayers;
 
-    public Game(Drawer drawer, Board board, IReadOnlyList<Player> players)
+    protected GameView GameView 
+        => new GameView(board, activePlayers);
+
+    public TraditionalGame(Drawer drawer, Board board, IReadOnlyList<Player> participants)
     {
         this.drawer = drawer;
         this.board = board;
 
-        this.participants = PlayersInRandomOrder(players);
-        activePlayers = new List<Player>(participants);
+        this.participants = PlayersInRandomOrder(participants);
+        this.activePlayers = new List<Player>(this.participants);
     }
 
     private IReadOnlyList<Player> PlayersInRandomOrder(IReadOnlyList<Player> playersToShuffle)
@@ -41,39 +44,35 @@ public partial class Game
 
     /// <summary></summary>
     /// <returns>The winner of the simulation. Can return <b>null</b>, if all players are disqualified</returns>
-    public Player? SimulateGame()
+    public virtual Player? SimulateGame()
     {
         //Before loop
-        drawer.ShiftBatchNumber();
-
         while (Loop())
         {
             //After loop
-
-            drawer.PopAll();
-
-            drawer.ShiftBatchNumber();
         }
-        
+
         //Game ended
         drawer.PopAll();
+        drawer.NewGame();
+
         return winner;
     }
     /// <summary>
     /// </summary>
     /// <returns><b>True</b> - game should continue <b>False</b> - game should end</returns>
-    private bool Loop()
+    protected virtual bool Loop()
     {
-        drawer.PushHeader();
-
         var playersToDisqualify = new List<Player>(activePlayers.Count);
         foreach (var player in activePlayers)
         {
-            var gameView = new GameView(board, activePlayers);
+            drawer.PushHeader($"{player.Nickname}s turn");
+            
+            var gameView = GameView;
 
             var playerMove = player.PlayerStrategy.GetPlayerMove(gameView);
             var isMoveLegal = PlayPlayerMove(player, playerMove);
-            
+
             board.Draw(drawer);
 
             //Disqualify for making an illegal move:
@@ -83,13 +82,15 @@ public partial class Game
                 continue;
             }
 
-            if (CheckForWin())
+            if (board.CheckForWin())
             {
                 winner = player;
-                drawer.PushWinMessage($"Winning move: {playerMove.Position} by {player.Nickname}");
+                drawer.PushHeader($"Winning move: {playerMove.Position} by {player.Nickname}");
+                drawer.PopAll();
                 return false;
             }
 
+            drawer.PopAll();
         }
 
         foreach (var player in playersToDisqualify)
@@ -110,17 +111,22 @@ public partial class Game
     /// Attempts to perform the move retrieved from the player. If the player decides to use a tile position that has no tile to it yet, it will create a new <b>TraditionalTile</b>
     /// </summary>
     /// <returns><b>True</b> - move was successful <b>False</b> - move was illegal </returns>
-    private bool PlayPlayerMove(Player player, PlayerMove playerMove)
+    protected bool PlayPlayerMove(Player player, PlayerMove playerMove)
     {
         //Todo: optimize with dictionary marshal operations
+
+        //Check if the move is valid according to the board
+        //e.g we have a 15 wide board and the player tries to place on the tile x:16
+        if (!board.IsMoveValid(playerMove.Position))
+            return false;
+
         if (board.TileSet.TryGetValue(playerMove.Position, out var tile))
         {
             //Tile exists
 
             //Player tried to replace an occupied tile
-            if(tile is TraditionalTile)
+            if (tile is TraditionalTile)
                 return false;
-
         }
 
         //Tile doesn't yet exist

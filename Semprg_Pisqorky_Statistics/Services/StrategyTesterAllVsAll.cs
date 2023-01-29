@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Semprg_Pisqorky;
 using Semprg_Pisqorky.Boards;
+using Semprg_Pisqorky.GameVariants;
 using Semprg_Pisqorky.Model;
 using Semprg_Pisqorky.Services;
 using Semprg_Pisqorky_Statistics.Model;
@@ -23,7 +24,9 @@ internal class StrategyTesterAllVsAll
         stopwatch = new Stopwatch();
     }
 
-    public GameStatistics TestStrategies()
+    public GameStatistics TestStrategies<TGame, TBoard>() 
+        where TGame : TraditionalGame 
+        where TBoard : Board,new()
     {
         var performedGamesStatistics = new IndividualGameStatisticsComponent[testAmount];
 
@@ -31,9 +34,11 @@ internal class StrategyTesterAllVsAll
         for (int i = 0; i < testAmount; i++)
         {
             //Initialize game
-            var traditionalBoard = new TraditionalBoard();
-            var game = new Game(drawer, traditionalBoard, participants);
-
+            //var game = new TG(drawer, board, participants);
+            var board = new TBoard();
+            var game = Activator.CreateInstance(typeof(TGame), drawer, board, participants) as TGame;
+            Debug.Assert(game != null, nameof(game) + " != null");
+            
             //Start stopwatch
             stopwatch.Restart();
 

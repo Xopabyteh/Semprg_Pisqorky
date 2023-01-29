@@ -1,11 +1,11 @@
 ﻿namespace Semprg_Pisqorky.Model;
 
-public struct PlayerMove
+public readonly struct PlayerMove
 {
     public Int2D Position { get; init; }
 
-    public PlayerMove(Int2D position)
-    {
-        Position = position;
-    }
+    /// <summary>
+    /// If prompted to take a swap, you can choose which players swap you want to take
+    /// </summary>
+    public Player? SwapPlayer { get; init; }
 }

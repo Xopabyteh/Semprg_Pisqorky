@@ -6,6 +6,13 @@ public class RandomStrategy : IPlayerStrategy
 {
     public PlayerMove GetPlayerMove(GameView gameView)
     {
+        if(gameView.SwapPrompt)
+            return new PlayerMove()
+            {
+                SwapPlayer = gameView.ActivePlayers[1]
+                //SwapPlayer = gameView.ActivePlayers[^Random.Shared.Next(1,3)]
+            };
+
         var tilePositions = gameView.Board.TileSet.Keys;
 
         var highestX = 14;
@@ -26,6 +33,10 @@ public class RandomStrategy : IPlayerStrategy
         {
             move = Int2D.RandomOnRectangle(new Int2D(lowestX - 1, lowestY - 1), new Int2D(highestX + 1, highestY + 1));
         }
-        return new PlayerMove(move);
+
+        return new PlayerMove
+        {
+            Position = move
+        };
     }
 }

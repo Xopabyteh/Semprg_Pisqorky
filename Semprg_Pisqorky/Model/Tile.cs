@@ -2,7 +2,7 @@
 
 public abstract class Tile
 {
-    public abstract Player? Occupant { get; init; }
+    public abstract Player? Occupant { get; set; }
     public abstract Int2D Position { get; init; }
 
     public virtual void Draw(Drawer drawer)

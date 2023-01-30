@@ -14,7 +14,7 @@ var players = new List<Player>
 var strategyTester = new StrategyTesterAllVsAll(
     testAmount: 10, 
     participants: players, 
-    drawer: new NullDrawer());
+    drawer: new ConsoleDrawer());
 
 var gameStatistics = strategyTester.TestStrategies<SingleSwapGame, TraditionalBoard>();
 var statisticsProcessor = new GameStatisticsProcessor(gameStatistics);

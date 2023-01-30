@@ -86,6 +86,7 @@ public class TraditionalGame
             //Disqualify for making an illegal move:
             if (!isMoveLegal)
             {
+                drawer.PushHeader($"Player {player.Nickname} made an illegal move: {playerMove.Position}");
                 playersToDisqualify.Add(player);
                 continue;
             }

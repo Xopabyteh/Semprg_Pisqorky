@@ -24,7 +24,7 @@ public class SingleSwapGame : TraditionalGame
         for (int i = 0; i < 3; i++)
         {
             drawer.PushHeader($"{swapper.Nickname} placed swap piece #{i}");
-            var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.PlaceSwapPiece));
+            var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.PlaceSwapPiece, swapper));
             //0: swapper
             //1: other (Place the other players piece)
             //2: swapper
@@ -42,7 +42,7 @@ public class SingleSwapGame : TraditionalGame
                     FinalState = GameState.Winner
                 };
         }
-        var swapPromptPlayerMove = other.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.ChooseSwap));
+        var swapPromptPlayerMove = other.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.ChooseSwap, other));
         board.Draw(drawer);
 
         //If prompted player doesn't respond to the swap correctly, the swapper wins

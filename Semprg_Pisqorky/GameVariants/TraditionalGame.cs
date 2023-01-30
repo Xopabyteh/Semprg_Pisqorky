@@ -76,7 +76,7 @@ public class TraditionalGame
         {
             drawer.PushHeader($"{player.Nickname}s turn");
             
-            var gameView = new GameView(board, activePlayers, RequiredActionType.GiveNextPosition);
+            var gameView = new GameView(board, activePlayers, RequiredActionType.GiveNextPosition, player);
 
             var playerMove = player.PlayerStrategy.GetPlayerMove(gameView);
             var isMoveLegal = PlayPlayerMove(player, playerMove);

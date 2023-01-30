@@ -5,20 +5,15 @@ namespace Semprg_Pisqorky_Statistics.Model;
 internal readonly struct GameStatistics
 {
 
-    public IReadOnlyList<IndividualGameStatisticsComponent> PerformedGamesStatistics { get; init; }
-    public IReadOnlyList<Player> Participants { get; init; }
+    public IReadOnlyList<IndividualGameStatisticsComponent> IndividualGamesStatistics { get; init; }
+    public IReadOnlyCollection<Player> Participants { get; init; }
 
     /// <summary>
-    /// The amount of games, where there was no winner, due to everyone being disqualified <u>You should cache this variable</u>
-    /// </summary>
-    public uint NoWinnerGamesCount
-        => (uint)PerformedGamesStatistics.Count(g => g.Winner is null);
-
-    /// <summary>
+    /// <u>You should cache this</u>
     /// The length of all games together
     /// </summary>
     public TimeSpan TotalGamesLength
-        => PerformedGamesStatistics.Aggregate(TimeSpan.Zero, (prev, cur) => prev + cur.GameLength);
+        => IndividualGamesStatistics.Aggregate(TimeSpan.Zero, (prev, cur) => prev + cur.GameLength);
 
     public uint PlayedGamesCount { get; init; }
 
@@ -28,7 +23,7 @@ internal readonly struct GameStatistics
     /// <exception cref="ArgumentException"></exception>
     public double GetWinRate(Player player)
     {
-        var wonGames = PerformedGamesStatistics.Count(g => g.Winner == player);
+        var wonGames = IndividualGamesStatistics.Count(g => g.GameResult.Winner == player);
         var winRate = (double)wonGames / PlayedGamesCount * 100.0d;
         return winRate;
     }

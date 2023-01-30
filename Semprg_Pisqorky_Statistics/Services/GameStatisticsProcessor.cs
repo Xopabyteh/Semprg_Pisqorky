@@ -1,4 +1,8 @@
-﻿using Semprg_Pisqorky_Statistics.Model;
+﻿using System.Diagnostics;
+using System.Text;
+using Semprg_Pisqorky.GameVariants;
+using Semprg_Pisqorky.Model;
+using Semprg_Pisqorky_Statistics.Model;
 
 namespace Semprg_Pisqorky_Statistics.Services;
 
@@ -14,21 +18,62 @@ internal class GameStatisticsProcessor
 
     public void LogStatistics()
     {
-        Console.WriteLine($"Played - {gameStatistics.PlayedGamesCount} games");
-        Console.WriteLine($"Amount of games with no winners - {gameStatistics.NoWinnerGamesCount}");
+        var statisticsStringBuilder = new StringBuilder();
 
-        Console.WriteLine("\n---\nPlayer winrates:");
+        //General data
+        statisticsStringBuilder.AppendLine($"Played - {gameStatistics.PlayedGamesCount} games");
+        statisticsStringBuilder.AppendLine($"Games with a draw - {gameStatistics.IndividualGamesStatistics.Count(g=>g.GameResult.FinalState == GameState.Draw)}");
+        statisticsStringBuilder.AppendLine($"Games with all players disqualified - {gameStatistics.IndividualGamesStatistics.Count(g=>g.GameResult.FinalState == GameState.AllDisqualified)}");
+        
+        //Game time
+        var totalGamesLength = gameStatistics.TotalGamesLength;
+        statisticsStringBuilder.AppendLine($"All games together took {totalGamesLength} with an average of {totalGamesLength / gameStatistics.PlayedGamesCount} per game");
+
+        //Win rates
+        statisticsStringBuilder.AppendLine("\n---\nPlayer winrates:");
         foreach (var player in gameStatistics.Participants)
         {
-            Console.WriteLine($"{player.Nickname} - {player.Shape}: {gameStatistics.GetWinRate(player)}%");
+            statisticsStringBuilder.AppendLine($"{player.Nickname} - {player.Shape}: {gameStatistics.GetWinRate(player)}%");
         }
 
-        Console.WriteLine("\n---\nGame lengths");
-        Console.WriteLine($"All games together took {gameStatistics.TotalGamesLength}");
-        for (var i = 0; i < gameStatistics.PerformedGamesStatistics.Count; i++)
+        statisticsStringBuilder.AppendLine("\n---\nIndividual games");
+        
+        //Individual games
+        for (var i = 0; i < gameStatistics.IndividualGamesStatistics.Count; i++)
         {
-            var performedGame = gameStatistics.PerformedGamesStatistics[i];
-            Console.WriteLine($"Game #{i} took {performedGame.GameLength}, {performedGame.Winner?.Nickname ?? "null"} won");
+            statisticsStringBuilder.AppendLine("|");
+            
+            var performedGame = gameStatistics.IndividualGamesStatistics[i];
+            
+            //Determine game state
+            string resultMsg;
+            switch (performedGame.GameResult.FinalState)
+            {
+                case GameState.Draw:
+                    resultMsg = "ended in a draw";
+                    break;
+                case GameState.Winner:
+                    Debug.Assert(performedGame.GameResult.Winner != null, "performedGame.GameResult.Winner != null");
+                    resultMsg = $"winner was {performedGame.GameResult.Winner.Nickname}";
+                    break;
+                case GameState.AllDisqualified:
+                    resultMsg = $"everyone was disqualified";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            
+            //General
+            //i+1 -> index from 1
+            statisticsStringBuilder.AppendLine($"|-[{performedGame.GameResult.FinalState}] Game #{i+1} took {performedGame.GameLength}, {resultMsg}");
+            
+            //Disqualifications
+            foreach (var disqualifiedPlayer in performedGame.GameResult.DisqualifiedPlayers)
+            {
+                statisticsStringBuilder.AppendLine($"|---{disqualifiedPlayer.Nickname} was disqualified");
+            }
         }
+
+        Console.WriteLine(statisticsStringBuilder);
     }
 }

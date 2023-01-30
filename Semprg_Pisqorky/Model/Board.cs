@@ -20,11 +20,21 @@ public abstract class Board
 
     public abstract bool IsMoveValid(Int2D pos);
 
+    public virtual GameState GetGameState()
+    {
+        if (CheckForWin())
+            return GameState.Winner;
+        //Check for draw?
+            //return Draw
+
+        return GameState.Ongoing;
+    }
+
     #region WinChecks
     /// <summary>
     /// </summary>
     /// <returns><b>True</b> - someone won <b>False</b> - noone won yet</returns>
-    public virtual bool CheckForWin()
+    protected virtual bool CheckForWin()
     {
         //Todo: optimize this
 

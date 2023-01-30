@@ -1,4 +1,5 @@
-﻿using Semprg_Pisqorky.Model;
+﻿using System.Data;
+using Semprg_Pisqorky.Model;
 using Semprg_Pisqorky.Tiles;
 
 namespace Semprg_Pisqorky.GameVariants;
@@ -8,7 +9,6 @@ public class TraditionalGame
     /// <summary>
     /// How many tiles must be in a line for it to be considered a win
     /// </summary>
-    private const uint WINNING_LINE = 5;
     protected readonly Drawer drawer;
     protected readonly Board board;
 
@@ -22,9 +22,6 @@ public class TraditionalGame
     /// </summary>
     protected List<Player> activePlayers;
 
-    protected GameView GameView 
-        => new GameView(board, activePlayers);
-
     public TraditionalGame(Drawer drawer, Board board, IReadOnlyList<Player> participants)
     {
         this.drawer = drawer;
@@ -32,6 +29,7 @@ public class TraditionalGame
 
         this.participants = PlayersInRandomOrder(participants);
         this.activePlayers = new List<Player>(this.participants);
+        this.disqualifiedPlayers = new List<Player>(participants.Count);
     }
 
     private IReadOnlyList<Player> PlayersInRandomOrder(IReadOnlyList<Player> playersToShuffle)
@@ -41,10 +39,12 @@ public class TraditionalGame
     }
 
     private Player? winner;
+    private GameState gameState;
+    private List<Player> disqualifiedPlayers;
 
     /// <summary></summary>
-    /// <returns>The winner of the simulation. Can return <b>null</b>, if all players are disqualified</returns>
-    public virtual Player? SimulateGame()
+    /// <returns>The winner of the simulation. Can return <b>null</b>, if the game ends in a <b>draw</b> all players are <b>disqualified</b></returns>
+    public virtual GameResult SimulateGame()
     {
         //Before loop
         while (Loop())
@@ -53,10 +53,18 @@ public class TraditionalGame
         }
 
         //Game ended
+        if (gameState == GameState.Ongoing)
+            throw new ConstraintException("Game finished with an ongoing state");
+        
         drawer.PopAll();
         drawer.NewGame();
 
-        return winner;
+        return new GameResult()
+        {
+            FinalState = gameState,
+            Winner = winner,
+            DisqualifiedPlayers = disqualifiedPlayers
+        };
     }
     /// <summary>
     /// </summary>
@@ -68,7 +76,7 @@ public class TraditionalGame
         {
             drawer.PushHeader($"{player.Nickname}s turn");
             
-            var gameView = GameView;
+            var gameView = new GameView(board, activePlayers, RequiredActionType.GiveNextPosition);
 
             var playerMove = player.PlayerStrategy.GetPlayerMove(gameView);
             var isMoveLegal = PlayPlayerMove(player, playerMove);
@@ -82,25 +90,44 @@ public class TraditionalGame
                 continue;
             }
 
-            if (board.CheckForWin())
+            gameState = board.GetGameState();
+            
+
+            if (gameState == GameState.Winner)
             {
                 winner = player;
                 drawer.PushHeader($"Winning move: {playerMove.Position} by {player.Nickname}");
-                drawer.PopAll();
+                return false;
+            }
+            if (gameState == GameState.Draw)
+            {
+                winner = null;
+                drawer.PushHeader($"Game ended with a draw");
                 return false;
             }
 
             drawer.PopAll();
         }
 
+        //Disqualify players
         foreach (var player in playersToDisqualify)
         {
             activePlayers.Remove(player);
+            disqualifiedPlayers.Add(player);
         }
 
-        if (activePlayers.Count < 2)
+        //Account for disqualifications
+        if (activePlayers.Count == 0)
         {
-            winner = activePlayers.FirstOrDefault();
+            winner = null;
+            gameState = GameState.AllDisqualified;
+            return false;
+        }
+
+        if (activePlayers.Count == 1)
+        {
+            winner = activePlayers.First();
+            gameState = GameState.Winner;
             return false;
         }
 

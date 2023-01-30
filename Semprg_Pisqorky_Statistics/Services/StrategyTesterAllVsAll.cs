@@ -43,7 +43,7 @@ internal class StrategyTesterAllVsAll
             stopwatch.Restart();
 
             //Simulate game
-            var winner = game.SimulateGame();
+            var gameResult = game.SimulateGame();
 
             //Stop stopwatch
             stopwatch.Stop();
@@ -52,14 +52,14 @@ internal class StrategyTesterAllVsAll
             performedGamesStatistics[i] = new IndividualGameStatisticsComponent()
             {
                 GameLength = stopwatch.Elapsed,
-                Winner = winner
+                GameResult = gameResult
             };
         }
 
         return new GameStatistics()
         {
             PlayedGamesCount = testAmount,
-            PerformedGamesStatistics = performedGamesStatistics,
+            IndividualGamesStatistics = performedGamesStatistics,
             Participants = participants
         };
     }

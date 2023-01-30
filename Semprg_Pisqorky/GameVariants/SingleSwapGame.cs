@@ -16,7 +16,7 @@ public class SingleSwapGame : TraditionalGame
             throw new ArgumentException("There must always be exactly 2 participants in this game");
     }
 
-    public override Player? SimulateGame()
+    public override GameResult SimulateGame()
     {
         //Before starting the loop, perform a swap
         var swapper = activePlayers[0];
@@ -24,7 +24,7 @@ public class SingleSwapGame : TraditionalGame
         for (int i = 0; i < 3; i++)
         {
             drawer.PushHeader($"{swapper.Nickname} placed swap piece #{i}");
-            var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(GameView);
+            var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.PlaceSwapPiece));
             //0: swapper
             //1: other (Place the other players piece)
             //2: swapper
@@ -35,9 +35,14 @@ public class SingleSwapGame : TraditionalGame
             
             //If the swapper makes an illegal move, the other player wins
             if (!isMoveLegal)
-                return other;
+                return new GameResult()
+                {
+                    DisqualifiedPlayers = new []{swapper},
+                    Winner = other,
+                    FinalState = GameState.Winner
+                };
         }
-        var swapPromptPlayerMove = other.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, true));
+        var swapPromptPlayerMove = other.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.ChooseSwap));
         board.Draw(drawer);
 
         //If prompted player doesn't respond to the swap correctly, the swapper wins
@@ -45,7 +50,12 @@ public class SingleSwapGame : TraditionalGame
         {
             drawer.PushHeader($"{other.Nickname} failed to choose");
             drawer.PopAll();
-            return swapper;
+            return new GameResult()
+            {
+                DisqualifiedPlayers = new[] { other },
+                Winner = swapper,
+                FinalState = GameState.Winner
+            };
         }
 
         drawer.PushHeader($"{other.Nickname} chose {swapPromptPlayerMove.SwapPlayer.Shape}");

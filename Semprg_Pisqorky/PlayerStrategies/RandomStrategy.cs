@@ -6,7 +6,7 @@ public class RandomStrategy : IPlayerStrategy
 {
     public PlayerMove GetPlayerMove(GameView gameView)
     {
-        if(gameView.SwapPrompt)
+        if(gameView.RequiredActionType == RequiredActionType.ChooseSwap)
             return new PlayerMove()
             {
                 SwapPlayer = gameView.ActivePlayers[1]

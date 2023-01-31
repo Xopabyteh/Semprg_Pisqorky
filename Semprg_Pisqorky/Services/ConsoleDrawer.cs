@@ -68,19 +68,23 @@ public class ConsoleDrawer : Drawer
         //Calculate offsets based on the smallest position draw requests
         //This assures that the console never draws anything on a negative position
         var offset = new Int2D(0, 0);
-        
-        var smallestX = drawRequests[DrawDataType.Body].Min(d => d.Position.X);
-        var smallestY = drawRequests[DrawDataType.Body].Min(d => d.Position.Y);
 
-        if (smallestX < 0)
+        if (drawRequests[DrawDataType.Body].Count > 0)
         {
-            offset.X = -smallestX;
+            var smallestX = drawRequests[DrawDataType.Body].Min(d => d.Position.X);
+            var smallestY = drawRequests[DrawDataType.Body].Min(d => d.Position.Y);
+
+            if (smallestX < 0)
+            {
+                offset.X = -smallestX;
+            }
+
+            if (smallestY < 0 + bodyOffset.Y)
+            {
+                offset.Y = -smallestY;
+            }
         }
 
-        if (smallestY < 0 + bodyOffset.Y)
-        {
-            offset.Y = -smallestY;
-        }
 
         if ((!offset.Equals(previousOffset) || !previousBodyOffset.Equals(bodyOffset)) || (previousWindowWidth != Console.WindowWidth || previousWindowHeight != Console.WindowHeight))
         {

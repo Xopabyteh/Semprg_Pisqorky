@@ -23,7 +23,7 @@ public class SingleSwapGame : TraditionalGame
         var other = activePlayers[1];
         for (int i = 0; i < 3; i++)
         {
-            drawer.PushHeader($"{swapper.Nickname} placed swap piece #{i}");
+            drawer.PushHeader($"{swapper.Nickname} is placing swap piece #{i}");
             var initialSwapMove = swapper.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.PlaceSwapPiece, swapper));
             //0: swapper
             //1: other (Place the other players piece)
@@ -31,16 +31,22 @@ public class SingleSwapGame : TraditionalGame
             var isMoveLegal = PlayPlayerMove(i == 1 ? other : swapper, initialSwapMove);
             
             board.Draw(drawer);
-            drawer.PopAll();
+            drawer.PopAll(); 
             
             //If the swapper makes an illegal move, the other player wins
             if (!isMoveLegal)
+            {
+                drawer.PushHeader("Swapper placed an illegal piece");
+                drawer.PopAll();
+                drawer.NewGame();
                 return new GameResult()
                 {
-                    DisqualifiedPlayers = new []{swapper},
+                    DisqualifiedPlayers = new[] { swapper },
                     Winner = other,
                     FinalState = GameState.Winner
                 };
+            }
+
         }
         var swapPromptPlayerMove = other.PlayerStrategy.GetPlayerMove(new GameView(board, activePlayers, RequiredActionType.ChooseSwap, other));
         board.Draw(drawer);
@@ -50,6 +56,7 @@ public class SingleSwapGame : TraditionalGame
         {
             drawer.PushHeader($"{other.Nickname} failed to choose");
             drawer.PopAll();
+            drawer.NewGame();
             return new GameResult()
             {
                 DisqualifiedPlayers = new[] { other },
